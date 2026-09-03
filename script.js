@@ -34,9 +34,7 @@ async function fetchMovies(params) {
     return data;
 }
 
-/* Build a sharper Netflix-style hero from several movie posters.
-   A single portrait poster stretched across a 16:9 hero becomes blurry,
-   so the posters are kept close to their natural proportions instead. */
+/* Build a sharp movie collage and slide the entire hero sideways between sets. */
 async function loadHeroMovies() {
     if (!banner) return;
 
@@ -59,25 +57,59 @@ async function loadHeroMovies() {
 
         if (!unique.length) return;
 
-        // Shuffle so the hero does not always start with the same artwork.
         unique.sort(() => Math.random() - 0.5);
 
-        let index = 0;
-        const setHero = () => {
-            const selected = [];
+        // Create two layers so the incoming artwork can physically slide in
+        // while the current artwork slides out in the opposite direction.
+        const slideA = document.createElement("div");
+        const slideB = document.createElement("div");
+        slideA.className = "heroSlide active";
+        slideB.className = "heroSlide";
+        banner.insertBefore(slideA, banner.firstChild);
+        banner.insertBefore(slideB, banner.firstChild);
+
+        const makeBackground = (startIndex) => {
+            const posters = [];
             for (let i = 0; i < 5; i++) {
-                selected.push(unique[(index + i) % unique.length].Poster);
+                posters.push(unique[(startIndex + i) % unique.length].Poster);
             }
+            return posters.map(poster => `url("${poster}")`).join(",");
+        };
 
-            selected.forEach((poster, i) => {
-                banner.style.setProperty(`--hero-image-${i + 1}`, `url("${poster}")`);
-            });
+        let index = 0;
+        let active = slideA;
+        let incoming = slideB;
 
+        const setInitial = () => {
+            active.style.backgroundImage = makeBackground(index);
             index = (index + 5) % unique.length;
         };
 
-        setHero();
-        setInterval(setHero, 7000);
+        const slideNext = () => {
+            incoming.style.backgroundImage = makeBackground(index);
+            index = (index + 5) % unique.length;
+
+            // Put the new layer just outside the right edge, then trigger the
+            // transition on the next frame for a smooth sideways motion.
+            incoming.classList.remove("exit");
+            incoming.classList.remove("active");
+            void incoming.offsetWidth;
+            incoming.classList.add("active");
+            active.classList.remove("active");
+            active.classList.add("exit");
+
+            const oldActive = active;
+            active = incoming;
+            incoming = oldActive;
+
+            setTimeout(() => {
+                incoming.classList.remove("exit");
+                incoming.classList.remove("active");
+            }, 1350);
+        };
+
+        setInitial();
+        setTimeout(() => setInterval(slideNext, 7000), 7000);
     } catch (error) {
         console.error("Hero artwork error:", error);
     }
@@ -210,7 +242,7 @@ function escapeHtml(value) {
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
+        .replace(/\"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
 
