@@ -43,22 +43,22 @@
 
     <section class="movies freeClassics" id="freeClassics">
         <h2>Free to Watch</h2>
-        <p class="sectionHint">Public-domain classics you can stream legally.</p>
+        <p class="sectionHint">Free/public-domain classics with direct browser playback.</p>
         <div class="classicRow">
-            <article class="classicCard">
-                <div class="classicArt zombieArt"><i class="fa-solid fa-moon"></i></div>
-                <div class="classicInfo">
-                    <h3>Night of the Living Dead</h3>
-                    <p>1968 • Horror • Public Domain</p>
-                    <button class="watchBtn" data-archive="night_of_the_living_dead" data-title="Night of the Living Dead"><i class="fa-solid fa-play"></i> Watch Now</button>
-                </div>
-            </article>
             <article class="classicCard">
                 <div class="classicArt fridayArt"><i class="fa-solid fa-newspaper"></i></div>
                 <div class="classicInfo">
                     <h3>His Girl Friday</h3>
                     <p>1940 • Comedy • Public Domain</p>
-                    <button class="watchBtn" data-archive="his_girl_friday" data-title="His Girl Friday"><i class="fa-solid fa-play"></i> Watch Now</button>
+                    <button class="watchBtn" data-video="https://archive.org/download/his_girl_friday/his_girl_friday_512kb.mp4" data-title="His Girl Friday"><i class="fa-solid fa-play"></i> Watch Now</button>
+                </div>
+            </article>
+            <article class="classicCard">
+                <div class="classicArt zombieArt"><i class="fa-solid fa-rocket"></i></div>
+                <div class="classicInfo">
+                    <h3>Plan 9 from Outer Space</h3>
+                    <p>1959 • Sci-Fi • Public Domain (U.S.)</p>
+                    <button class="watchBtn" data-video="https://archive.org/download/plan-9-from-outer-space-1959/Plan%209%20From%20Outer%20Space%20%281959%29.ia.mp4" data-title="Plan 9 from Outer Space"><i class="fa-solid fa-play"></i> Watch Now</button>
                 </div>
             </article>
         </div>
@@ -68,11 +68,12 @@
         <div class="playerShell">
             <button class="closePlayer" id="closePlayer" aria-label="Close player"><i class="fa-solid fa-xmark"></i></button>
             <div class="playerTitle" id="playerTitle">Now Playing</div>
-            <iframe id="moviePlayer" title="Movie player" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+            <video id="moviePlayer" controls playsinline preload="metadata"></video>
+            <div class="playerError" id="playerError" hidden>That video could not be loaded. Try another title.</div>
         </div>
     </div>
 
     <footer><p>Netflix Clone © 2026</p></footer>
-    <script src="script.js?v=20260903"></script>
+    <script src="script.js?v=20260903b"></script>
 </body>
 </html>
