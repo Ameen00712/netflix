@@ -34,19 +34,24 @@ async function fetchMovies(params) {
     return data;
 }
 
-/* Get recent movie artwork for the Netflix-style hero banner. */
+/* Build a sharper Netflix-style hero from several movie posters.
+   A single portrait poster stretched across a 16:9 hero becomes blurry,
+   so the posters are kept close to their natural proportions instead. */
 async function loadHeroMovies() {
     if (!banner) return;
 
     try {
-        const searches = ["the", "a", "love", "man"];
+        const currentYear = new Date().getFullYear();
+        const searches = ["the", "a", "love", "man", "night"];
         const allMovies = [];
 
         for (const term of searches) {
-            try {
-                const data = await fetchMovies({ s: term, type: "movie", y: new Date().getFullYear(), page: 1 });
-                if (data.Search) allMovies.push(...data.Search);
-            } catch (_) {}
+            for (const year of [currentYear, currentYear - 1]) {
+                try {
+                    const data = await fetchMovies({ s: term, type: "movie", y: year, page: 1 });
+                    if (data.Search) allMovies.push(...data.Search);
+                } catch (_) {}
+            }
         }
 
         const unique = [...new Map(allMovies.map(movie => [movie.imdbID, movie])).values()]
@@ -54,11 +59,21 @@ async function loadHeroMovies() {
 
         if (!unique.length) return;
 
+        // Shuffle so the hero does not always start with the same artwork.
+        unique.sort(() => Math.random() - 0.5);
+
         let index = 0;
         const setHero = () => {
-            const movie = unique[index % unique.length];
-            banner.style.setProperty("--hero-image", `url("${movie.Poster}")`);
-            index++;
+            const selected = [];
+            for (let i = 0; i < 5; i++) {
+                selected.push(unique[(index + i) % unique.length].Poster);
+            }
+
+            selected.forEach((poster, i) => {
+                banner.style.setProperty(`--hero-image-${i + 1}`, `url("${poster}")`);
+            });
+
+            index = (index + 5) % unique.length;
         };
 
         setHero();
