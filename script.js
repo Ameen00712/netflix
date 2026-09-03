@@ -34,9 +34,7 @@ async function fetchMovies(params) {
     return data;
 }
 
-/* Two-layer Netflix-style hero slider.
-   The outgoing layer is reset off-screen WITHOUT animation after each slide,
-   preventing it from suddenly crossing the screen again. */
+/* Two-layer Netflix-style hero slider. */
 async function loadHeroMovies() {
     if (!banner) return;
 
@@ -102,11 +100,9 @@ async function loadHeroMovies() {
                 incoming.classList.remove("active", "exit");
                 incoming.classList.add("reset");
                 incoming.style.backgroundImage = "none";
-            }, 1400);
+            }, 2100);
         };
 
-        // Start the first transition after only 2 seconds.
-        // Then continue with a 7-second viewing interval.
         setTimeout(() => {
             slideNext();
             setInterval(slideNext, 7000);
@@ -262,6 +258,56 @@ async function showMovie(imdbId) {
         alert(`Unable to load movie details: ${error.message}`);
     }
 }
+
+// ==========================
+// Legal free movie player
+// ==========================
+const playerModal = document.getElementById("playerModal");
+const moviePlayer = document.getElementById("moviePlayer");
+const playerTitle = document.getElementById("playerTitle");
+const closePlayer = document.getElementById("closePlayer");
+const heroPlayBtn = document.getElementById("heroPlayBtn");
+
+function openMoviePlayer(archiveId, title) {
+    if (!playerModal || !moviePlayer) return;
+    playerTitle.textContent = title || "Now Playing";
+    moviePlayer.src = `https://archive.org/embed/${encodeURIComponent(archiveId)}?autoplay=1`;
+    playerModal.classList.add("open");
+    playerModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("playerOpen");
+}
+
+function closeMoviePlayer() {
+    if (!playerModal || !moviePlayer) return;
+    moviePlayer.src = "";
+    playerModal.classList.remove("open");
+    playerModal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("playerOpen");
+}
+
+document.querySelectorAll(".watchBtn").forEach(button => {
+    button.addEventListener("click", () => {
+        openMoviePlayer(button.dataset.archive, button.dataset.title);
+    });
+});
+
+if (heroPlayBtn) {
+    heroPlayBtn.addEventListener("click", () => {
+        openMoviePlayer("night_of_the_living_dead", "Night of the Living Dead");
+    });
+}
+
+if (closePlayer) closePlayer.addEventListener("click", closeMoviePlayer);
+
+if (playerModal) {
+    playerModal.addEventListener("click", event => {
+        if (event.target === playerModal) closeMoviePlayer();
+    });
+}
+
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape") closeMoviePlayer();
+});
 
 getPopularMovies();
 loadHeroMovies();
