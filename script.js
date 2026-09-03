@@ -15,34 +15,22 @@ const banner = document.querySelector(".banner");
 async function fetchMovies(params) {
     const url = new URL(API_BASE);
     url.searchParams.set("apikey", API_KEY);
-
     Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-            url.searchParams.set(key, value);
-        }
+        if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, value);
     });
-
-    const response = await fetch(url.toString(), {
-        method: "GET",
-        headers: { accept: "application/json" }
-    });
-
+    const response = await fetch(url.toString(), { method: "GET", headers: { accept: "application/json" } });
     if (!response.ok) throw new Error(`OMDb request failed (${response.status})`);
-
     const data = await response.json();
     if (data.Response === "False") throw new Error(data.Error || "OMDb request failed");
     return data;
 }
 
-/* Two-layer Netflix-style hero slider. */
 async function loadHeroMovies() {
     if (!banner) return;
-
     try {
         const currentYear = new Date().getFullYear();
         const searches = ["the", "a", "love", "man", "night"];
         const allMovies = [];
-
         for (const term of searches) {
             for (const year of [currentYear, currentYear - 1]) {
                 try {
@@ -51,65 +39,44 @@ async function loadHeroMovies() {
                 } catch (_) {}
             }
         }
-
-        const unique = [...new Map(allMovies.map(movie => [movie.imdbID, movie])).values()]
-            .filter(movie => movie.Poster && movie.Poster !== "N/A");
-
+        const unique = [...new Map(allMovies.map(movie => [movie.imdbID, movie])).values()].filter(movie => movie.Poster && movie.Poster !== "N/A");
         if (!unique.length) return;
         unique.sort(() => Math.random() - 0.5);
-
         const slideA = document.createElement("div");
         const slideB = document.createElement("div");
         slideA.className = "heroSlide active";
         slideB.className = "heroSlide reset";
         banner.insertBefore(slideA, banner.firstChild);
         banner.insertBefore(slideB, banner.firstChild);
-
-        const makeBackground = (startIndex) => {
+        const makeBackground = startIndex => {
             const posters = [];
-            for (let i = 0; i < 5; i++) {
-                posters.push(unique[(startIndex + i) % unique.length].Poster);
-            }
+            for (let i = 0; i < 5; i++) posters.push(unique[(startIndex + i) % unique.length].Poster);
             return posters.map(poster => `url("${poster}")`).join(",");
         };
-
-        let index = 0;
-        let active = slideA;
-        let incoming = slideB;
-
+        let index = 0, active = slideA, incoming = slideB;
         active.style.backgroundImage = makeBackground(index);
         index = (index + 5) % unique.length;
-
         const slideNext = () => {
             incoming.classList.remove("active", "exit");
             incoming.classList.add("reset");
             incoming.style.backgroundImage = makeBackground(index);
             index = (index + 5) % unique.length;
             void incoming.offsetWidth;
-
             incoming.classList.remove("reset");
             incoming.classList.add("active");
             active.classList.remove("active");
             active.classList.add("exit");
-
             const oldActive = active;
             active = incoming;
             incoming = oldActive;
-
             setTimeout(() => {
                 incoming.classList.remove("active", "exit");
                 incoming.classList.add("reset");
                 incoming.style.backgroundImage = "none";
             }, 2100);
         };
-
-        setTimeout(() => {
-            slideNext();
-            setInterval(slideNext, 7000);
-        }, 2000);
-    } catch (error) {
-        console.error("Hero artwork error:", error);
-    }
+        setTimeout(() => { slideNext(); setInterval(slideNext, 7000); }, 2000);
+    } catch (error) { console.error("Hero artwork error:", error); }
 }
 
 async function getPopularMovies() {
@@ -130,14 +97,8 @@ let lastSearch = "";
 
 async function searchMovies(query) {
     query = query.trim();
-    if (!query) {
-        lastSearch = "";
-        getPopularMovies();
-        return;
-    }
-
+    if (!query) { lastSearch = ""; getPopularMovies(); return; }
     lastSearch = query;
-
     try {
         showLoading(`Searching for "${query}"...`);
         const data = await fetchMovies({ s: query, type: "movie", page: 1 });
@@ -146,168 +107,100 @@ async function searchMovies(query) {
         displayMovies(data.Search || []);
     } catch (error) {
         console.error("OMDb search error:", error);
-        if (query === lastSearch) {
-            moviesTitle.textContent = `Search: ${query}`;
-            showApiError(error);
-        }
+        if (query === lastSearch) { moviesTitle.textContent = `Search: ${query}`; showApiError(error); }
     }
 }
 
-function runSearch() {
-    clearTimeout(searchTimer);
-    searchMovies(search.value);
-}
-
+function runSearch() { clearTimeout(searchTimer); searchMovies(search.value); }
 search.addEventListener("input", function () {
     const query = search.value.trim();
     clearTimeout(searchTimer);
-    if (!query) {
-        lastSearch = "";
-        getPopularMovies();
-        return;
-    }
+    if (!query) { lastSearch = ""; getPopularMovies(); return; }
     searchTimer = setTimeout(() => searchMovies(query), 350);
 });
-
-search.addEventListener("keydown", function (event) {
-    if (event.key === "Enter") {
-        event.preventDefault();
-        runSearch();
-    }
-});
-
-if (searchIcon) {
-    searchIcon.style.cursor = "pointer";
-    searchIcon.addEventListener("click", runSearch);
-}
+search.addEventListener("keydown", function (event) { if (event.key === "Enter") { event.preventDefault(); runSearch(); } });
+if (searchIcon) { searchIcon.style.cursor = "pointer"; searchIcon.addEventListener("click", runSearch); }
 
 function displayMovies(movies) {
     movieRow.innerHTML = "";
-    if (!movies.length) {
-        showMessage("No movies found. Try another title.");
-        return;
-    }
-
+    if (!movies.length) { showMessage("No movies found. Try another title."); return; }
     movies.forEach(movie => {
         const title = movie.Title || "Untitled";
         const poster = movie.Poster && movie.Poster !== "N/A" ? movie.Poster : IMAGE_FALLBACK;
         const year = movie.Year || "Unknown";
         const imdbId = movie.imdbID;
-
         const card = document.createElement("div");
         card.className = "movie";
-        card.innerHTML = `
-            <img src="${escapeHtml(poster)}" alt="${escapeHtml(title)}" loading="lazy">
-            <div class="overlay">
-                <h3>${escapeHtml(title)}</h3>
-                <p>📅 ${escapeHtml(year)}</p>
-                ${imdbId ? `<button type="button" onclick="showMovie('${escapeHtml(imdbId)}')">More Info</button>` : ""}
-            </div>
-        `;
+        card.innerHTML = `<img src="${escapeHtml(poster)}" alt="${escapeHtml(title)}" loading="lazy"><div class="overlay"><h3>${escapeHtml(title)}</h3><p>📅 ${escapeHtml(year)}</p>${imdbId ? `<button type="button" onclick="showMovie('${escapeHtml(imdbId)}')">More Info</button>` : ""}</div>`;
         movieRow.appendChild(card);
     });
 }
-
-function showLoading(message = "Loading...") {
-    movieRow.innerHTML = `<p class="statusMessage">${escapeHtml(message)}</p>`;
-}
-
-function showMessage(message) {
-    movieRow.innerHTML = `<p class="statusMessage">${escapeHtml(message)}</p>`;
-}
-
+function showLoading(message = "Loading...") { movieRow.innerHTML = `<p class="statusMessage">${escapeHtml(message)}</p>`; }
+function showMessage(message) { movieRow.innerHTML = `<p class="statusMessage">${escapeHtml(message)}</p>`; }
 function showApiError(error) {
     const message = error?.message || "Unknown API error";
     const lower = message.toLowerCase();
-    if (lower.includes("invalid api key") || lower.includes("api key") || lower.includes("not allowed")) {
-        showMessage("OMDb API key is invalid or not activated yet. Check your OMDb email and API key.");
-        return;
-    }
-    if (lower.includes("too many results")) {
-        showMessage("Too many results. Please search for a more specific movie title.");
-        return;
-    }
-    if (lower.includes("not found")) {
-        showMessage("No movies found. Try another title.");
-        return;
-    }
+    if (lower.includes("invalid api key") || lower.includes("api key") || lower.includes("not allowed")) { showMessage("OMDb API key is invalid or not activated yet. Check your OMDb email and API key."); return; }
+    if (lower.includes("too many results")) { showMessage("Too many results. Please search for a more specific movie title."); return; }
+    if (lower.includes("not found")) { showMessage("No movies found. Try another title."); return; }
     showMessage(`OMDb error: ${message}`);
 }
-
-function escapeHtml(value) {
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
+function escapeHtml(value) { return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;"); }
 
 async function showMovie(imdbId) {
     try {
         const movie = await fetchMovies({ i: imdbId, plot: "full" });
-        alert(
-            `🎬 ${movie.Title}\n\n` +
-            `⭐ IMDb Rating: ${movie.imdbRating || "N/A"}\n\n` +
-            `📅 Release: ${movie.Released || movie.Year || "Unknown"}\n\n` +
-            `🎭 Genre: ${movie.Genre || "Unknown"}\n\n` +
-            `📝 ${movie.Plot || "No description available."}`
-        );
-    } catch (error) {
-        console.error("OMDb details error:", error);
-        alert(`Unable to load movie details: ${error.message}`);
-    }
+        alert(`🎬 ${movie.Title}\n\n⭐ IMDb Rating: ${movie.imdbRating || "N/A"}\n\n📅 Release: ${movie.Released || movie.Year || "Unknown"}\n\n🎭 Genre: ${movie.Genre || "Unknown"}\n\n📝 ${movie.Plot || "No description available."}`);
+    } catch (error) { console.error("OMDb details error:", error); alert(`Unable to load movie details: ${error.message}`); }
 }
 
 // ==========================
-// Legal free movie player
+// Direct HTML5 video player
 // ==========================
 const playerModal = document.getElementById("playerModal");
 const moviePlayer = document.getElementById("moviePlayer");
 const playerTitle = document.getElementById("playerTitle");
+const playerError = document.getElementById("playerError");
 const closePlayer = document.getElementById("closePlayer");
 const heroPlayBtn = document.getElementById("heroPlayBtn");
 
-function openMoviePlayer(archiveId, title) {
+function openMoviePlayer(videoUrl, title) {
     if (!playerModal || !moviePlayer) return;
     playerTitle.textContent = title || "Now Playing";
-    moviePlayer.src = `https://archive.org/embed/${encodeURIComponent(archiveId)}?autoplay=1`;
+    if (playerError) playerError.hidden = true;
+    moviePlayer.pause();
+    moviePlayer.removeAttribute("src");
+    moviePlayer.load();
+    moviePlayer.src = videoUrl;
+    moviePlayer.load();
     playerModal.classList.add("open");
     playerModal.setAttribute("aria-hidden", "false");
     document.body.classList.add("playerOpen");
+    moviePlayer.play().catch(() => {});
 }
 
 function closeMoviePlayer() {
     if (!playerModal || !moviePlayer) return;
-    moviePlayer.src = "";
+    moviePlayer.pause();
+    moviePlayer.removeAttribute("src");
+    moviePlayer.load();
     playerModal.classList.remove("open");
     playerModal.setAttribute("aria-hidden", "true");
     document.body.classList.remove("playerOpen");
 }
 
 document.querySelectorAll(".watchBtn").forEach(button => {
-    button.addEventListener("click", () => {
-        openMoviePlayer(button.dataset.archive, button.dataset.title);
-    });
+    button.addEventListener("click", () => openMoviePlayer(button.dataset.video, button.dataset.title));
 });
 
 if (heroPlayBtn) {
-    heroPlayBtn.addEventListener("click", () => {
-        openMoviePlayer("night_of_the_living_dead", "Night of the Living Dead");
-    });
+    heroPlayBtn.addEventListener("click", () => openMoviePlayer("https://archive.org/download/his_girl_friday/his_girl_friday_512kb.mp4", "His Girl Friday"));
 }
 
+if (moviePlayer) moviePlayer.addEventListener("error", () => { if (playerError) playerError.hidden = false; });
 if (closePlayer) closePlayer.addEventListener("click", closeMoviePlayer);
-
-if (playerModal) {
-    playerModal.addEventListener("click", event => {
-        if (event.target === playerModal) closeMoviePlayer();
-    });
-}
-
-document.addEventListener("keydown", event => {
-    if (event.key === "Escape") closeMoviePlayer();
-});
+if (playerModal) playerModal.addEventListener("click", event => { if (event.target === playerModal) closeMoviePlayer(); });
+document.addEventListener("keydown", event => { if (event.key === "Escape") closeMoviePlayer(); });
 
 getPopularMovies();
 loadHeroMovies();
