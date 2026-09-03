@@ -10,7 +10,6 @@ body{
     color:white;
 }
 
-/* HEADER */
 header{
     position:fixed;
     top:0;
@@ -24,15 +23,11 @@ header{
     z-index:100;
 }
 
-.logo{ width:120px; }
+.logo{width:120px;}
 
-nav{ display:flex; gap:25px; }
-nav a{
-    color:white;
-    text-decoration:none;
-    transition:.3s;
-}
-nav a:hover{ color:#e50914; }
+nav{display:flex;gap:25px;}
+nav a{color:white;text-decoration:none;transition:.3s;}
+nav a:hover{color:#e50914;}
 
 .searchBox{
     display:flex;
@@ -48,132 +43,113 @@ nav a:hover{ color:#e50914; }
     outline:none;
     width:220px;
 }
-.searchBox i{ color:white; }
+.searchBox i{color:white;}
 
-/* HERO */
+/* NETFLIX-STYLE HERO */
 .banner{
-    height:80vh;
     position:relative;
-    overflow:hidden;
+    height:82vh;
+    min-height:620px;
+    background-size:cover;
+    background-position:center 25%;
+    background-repeat:no-repeat;
     display:flex;
     align-items:center;
     padding:80px;
-    background:#111;
+    overflow:hidden;
+    isolation:isolate;
 }
 
-/* Dynamic movie artwork behind the hero text */
+/* Dark cinematic fades over the artwork */
 .banner::before{
     content:"";
     position:absolute;
     inset:0;
-    background-image:var(--hero-image, url("images/banner.jpg"));
-    background-size:cover;
-    background-position:center 25%;
-    filter:blur(1px);
-    transform:scale(1.03);
-    opacity:.72;
-    transition:background-image 1s ease, opacity 1s ease;
+    z-index:-1;
+    background:
+        linear-gradient(90deg,rgba(0,0,0,.92) 0%,rgba(0,0,0,.68) 32%,rgba(0,0,0,.18) 70%,rgba(0,0,0,.5) 100%),
+        linear-gradient(0deg,#141414 0%,transparent 28%,rgba(0,0,0,.08) 100%);
 }
 
-/* Netflix-style dark fade over the artwork */
+/* Slight cinematic softness so poster art feels like a backdrop */
 .banner::after{
     content:"";
     position:absolute;
-    inset:0;
-    background:
-        linear-gradient(90deg, #141414 0%, rgba(20,20,20,.92) 15%, rgba(20,20,20,.58) 48%, rgba(20,20,20,.15) 75%, #141414 100%),
-        linear-gradient(0deg, #141414 0%, transparent 35%, rgba(0,0,0,.15) 100%);
-    z-index:1;
+    inset:-12px;
+    z-index:-2;
+    background:inherit;
+    background-size:cover;
+    background-position:center 25%;
+    filter:saturate(1.08) contrast(1.05) brightness(.86);
+    transform:scale(1.03);
 }
 
 .overlayBanner{
-    width:500px;
+    width:min(600px,55vw);
     position:relative;
     z-index:2;
-    text-shadow:0 2px 8px rgba(0,0,0,.8);
+    margin-top:30px;
+    text-shadow:0 3px 18px rgba(0,0,0,.75);
 }
-.overlayBanner h1{ font-size:55px; }
+.overlayBanner h1{
+    font-size:clamp(42px,5vw,72px);
+    line-height:1.05;
+    font-weight:800;
+    letter-spacing:-1.5px;
+}
 .overlayBanner p{
     margin:20px 0;
     line-height:1.6;
+    font-size:18px;
 }
-.buttons{ display:flex; gap:15px; }
+
+.buttons{display:flex;gap:15px;}
 .playBtn,.infoBtn{
     padding:12px 25px;
     border:none;
     border-radius:6px;
     cursor:pointer;
     font-size:16px;
+    font-weight:600;
+    transition:.2s;
 }
-.playBtn{ background:white; color:black; }
-.infoBtn{ background:#555; color:white; }
+.playBtn{background:white;color:black;}
+.infoBtn{background:rgba(85,85,85,.9);color:white;}
+.playBtn:hover,.infoBtn:hover{transform:scale(1.04);}
 
 /* MOVIES */
-.movies{ padding:40px; }
-.movies h2{ margin-bottom:20px; }
-.movieRow{
-    display:flex;
-    gap:20px;
-    overflow-x:auto;
-    padding-bottom:20px;
-}
-.movieRow::-webkit-scrollbar{ height:8px; }
-.movieRow::-webkit-scrollbar-thumb{ background:#666; }
-.movie{
-    position:relative;
-    min-width:220px;
-    transition:.3s;
-}
-.movie img{
-    width:220px;
-    height:320px;
-    border-radius:8px;
-    object-fit:cover;
-}
-.movie:hover{ transform:scale(1.08); }
+.movies{padding:40px;}
+.movies h2{margin-bottom:20px;}
+.movieRow{display:flex;gap:20px;overflow-x:auto;padding-bottom:20px;}
+.movieRow::-webkit-scrollbar{height:8px;}
+.movieRow::-webkit-scrollbar-thumb{background:#666;}
+.movie{position:relative;min-width:220px;transition:.3s;}
+.movie img{width:220px;height:320px;border-radius:8px;object-fit:cover;}
+.movie:hover{transform:scale(1.08);}
 .overlay{
-    position:absolute;
-    inset:0;
-    background:rgba(0,0,0,.8);
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    opacity:0;
-    transition:.3s;
-    border-radius:8px;
-    text-align:center;
-    padding:15px;
+    position:absolute;inset:0;background:rgba(0,0,0,.8);
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    opacity:0;transition:.3s;border-radius:8px;text-align:center;padding:15px;
 }
-.movie:hover .overlay{ opacity:1; }
-.overlay h3{ margin-bottom:10px; }
-.overlay p{ margin-bottom:15px; }
+.movie:hover .overlay{opacity:1;}
+.overlay h3{margin-bottom:10px;}
+.overlay p{margin-bottom:15px;}
 .overlay button{
-    background:#e50914;
-    color:white;
-    border:none;
-    padding:10px 20px;
-    cursor:pointer;
-    border-radius:5px;
+    background:#e50914;color:white;border:none;padding:10px 20px;
+    cursor:pointer;border-radius:5px;
 }
 
-/* FOOTER */
-footer{
-    text-align:center;
-    padding:30px;
-    color:#999;
-}
+footer{text-align:center;padding:30px;color:#999;}
 
-/* RESPONSIVE */
 @media(max-width:900px){
-    header{ padding:15px 20px; }
-    nav{ display:none; }
-    .searchBox input{ width:120px; }
-    .banner{ padding:30px; height:60vh; }
-    .overlayBanner{ width:100%; }
-    .overlayBanner h1{ font-size:35px; }
-    .movie{ min-width:160px; }
-    .movie img{ width:160px; height:240px; }
+    header{padding:15px 20px;}
+    nav{display:none;}
+    .searchBox input{width:120px;}
+    .banner{padding:30px;height:65vh;min-height:500px;background-position:center;}
+    .overlayBanner{width:100%;margin-top:40px;}
+    .overlayBanner h1{font-size:35px;}
+    .movie{min-width:160px;}
+    .movie img{width:160px;height:240px;}
 }
 
 .logoText{
