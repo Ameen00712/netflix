@@ -83,14 +83,12 @@ async function loadHeroMovies() {
         index = (index + 5) % unique.length;
 
         const slideNext = () => {
-            // Incoming layer starts on the right with transitions disabled.
             incoming.classList.remove("active", "exit");
             incoming.classList.add("reset");
             incoming.style.backgroundImage = makeBackground(index);
             index = (index + 5) % unique.length;
             void incoming.offsetWidth;
 
-            // Both layers now move simultaneously: new -> from right, old -> left.
             incoming.classList.remove("reset");
             incoming.classList.add("active");
             active.classList.remove("active");
@@ -100,7 +98,6 @@ async function loadHeroMovies() {
             active = incoming;
             incoming = oldActive;
 
-            // IMPORTANT: reset the old layer instantly, never animate it back.
             setTimeout(() => {
                 incoming.classList.remove("active", "exit");
                 incoming.classList.add("reset");
@@ -108,7 +105,12 @@ async function loadHeroMovies() {
             }, 1400);
         };
 
-        setTimeout(() => setInterval(slideNext, 7000), 7000);
+        // Start the first transition after only 2 seconds.
+        // Then continue with a 7-second viewing interval.
+        setTimeout(() => {
+            slideNext();
+            setInterval(slideNext, 7000);
+        }, 2000);
     } catch (error) {
         console.error("Hero artwork error:", error);
     }
