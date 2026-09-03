@@ -1,47 +1,52 @@
 // ==========================
-// TMDB API
+// OMDb API
 // ==========================
 
-const API_KEY = "cd8f38a3f299ded9ea7510dd0ccaae20";
-const API_BASE = "https://api.themoviedb.org/3";
-const IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
+const API_KEY = "2bb6471e";
+const API_BASE = "https://www.omdbapi.com/";
+const IMAGE_FALLBACK = "https://via.placeholder.com/220x330?text=No+Image";
 
 const movieRow = document.getElementById("movieRow");
 const search = document.getElementById("search");
 const moviesTitle = document.querySelector(".movies h2");
 const searchIcon = document.querySelector(".searchBox i");
 
-async function fetchMovies(endpoint) {
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-        method: "GET",
-        headers: {
-            accept: "application/json"
+async function fetchMovies(params) {
+    const url = new URL(API_BASE);
+    url.searchParams.set("apikey", API_KEY);
+
+    Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+            url.searchParams.set(key, value);
         }
     });
 
-    let data = null;
-    try {
-        data = await response.json();
-    } catch (_) {
-        // Keep the original HTTP error if TMDB did not return JSON.
-    }
+    const response = await fetch(url.toString(), {
+        method: "GET",
+        headers: { accept: "application/json" }
+    });
 
     if (!response.ok) {
-        const message = data?.status_message || `TMDB request failed (${response.status})`;
-        throw new Error(message);
+        throw new Error(`OMDb request failed (${response.status})`);
+    }
+
+    const data = await response.json();
+
+    if (data.Response === "False") {
+        throw new Error(data.Error || "OMDb request failed");
     }
 
     return data;
 }
 
-async function getTrendingMovies() {
+async function getPopularMovies() {
     try {
         showLoading("Loading movies...");
-        const data = await fetchMovies(`/trending/movie/week?api_key=${API_KEY}`);
-        moviesTitle.textContent = "Trending Movies";
-        displayMovies(data.results || []);
+        const data = await fetchMovies({ s: "Avengers", type: "movie", page: 1 });
+        moviesTitle.textContent = "Popular Movies";
+        displayMovies(data.Search || []);
     } catch (error) {
-        console.error("TMDB error:", error);
+        console.error("OMDb error:", error);
         moviesTitle.textContent = "Movies";
         showApiError(error);
     }
@@ -52,8 +57,10 @@ let lastSearch = "";
 
 async function searchMovies(query) {
     query = query.trim();
+
     if (!query) {
-        getTrendingMovies();
+        lastSearch = "";
+        getPopularMovies();
         return;
     }
 
@@ -61,19 +68,23 @@ async function searchMovies(query) {
 
     try {
         showLoading(`Searching for "${query}"...`);
-        const data = await fetchMovies(
-            `/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`
-        );
+        const data = await fetchMovies({
+            s: query,
+            type: "movie",
+            page: 1
+        });
 
         // Ignore an older request if the user has already searched for something else.
         if (query !== lastSearch) return;
 
         moviesTitle.textContent = `Search results for "${query}"`;
-        displayMovies(data.results || []);
+        displayMovies(data.Search || []);
     } catch (error) {
-        console.error("TMDB search error:", error);
-        moviesTitle.textContent = `Search: ${query}`;
-        showApiError(error);
+        console.error("OMDb search error:", error);
+        if (query === lastSearch) {
+            moviesTitle.textContent = `Search: ${query}`;
+            showApiError(error);
+        }
     }
 }
 
@@ -88,7 +99,7 @@ search.addEventListener("input", function () {
 
     if (!query) {
         lastSearch = "";
-        getTrendingMovies();
+        getPopularMovies();
         return;
     }
 
@@ -102,7 +113,6 @@ search.addEventListener("keydown", function (event) {
     }
 });
 
-// Make the magnifying-glass icon work as a search button too.
 if (searchIcon) {
     searchIcon.style.cursor = "pointer";
     searchIcon.addEventListener("click", runSearch);
@@ -117,20 +127,19 @@ function displayMovies(movies) {
     }
 
     movies.forEach(movie => {
-        const title = movie.title || movie.original_title || "Untitled";
-        const poster = movie.poster_path
-            ? `${IMAGE_BASE}${movie.poster_path}`
-            : "https://via.placeholder.com/220x330?text=No+Image";
-        const rating = Number(movie.vote_average || 0).toFixed(1);
+        const title = movie.Title || "Untitled";
+        const poster = movie.Poster && movie.Poster !== "N/A" ? movie.Poster : IMAGE_FALLBACK;
+        const year = movie.Year || "Unknown";
+        const imdbId = movie.imdbID;
 
         const card = document.createElement("div");
         card.className = "movie";
         card.innerHTML = `
-            <img src="${poster}" alt="${escapeHtml(title)}" loading="lazy">
+            <img src="${escapeHtml(poster)}" alt="${escapeHtml(title)}" loading="lazy">
             <div class="overlay">
                 <h3>${escapeHtml(title)}</h3>
-                <p>⭐ ${rating}</p>
-                <button type="button" onclick="showMovie(${movie.id})">More Info</button>
+                <p>📅 ${escapeHtml(year)}</p>
+                ${imdbId ? `<button type="button" onclick="showMovie('${escapeHtml(imdbId)}')">More Info</button>` : ""}
             </div>
         `;
         movieRow.appendChild(card);
@@ -147,13 +156,24 @@ function showMessage(message) {
 
 function showApiError(error) {
     const message = error?.message || "Unknown API error";
+    const lower = message.toLowerCase();
 
-    if (message.toLowerCase().includes("invalid api key") || message.toLowerCase().includes("authentication failed")) {
-        showMessage("TMDB API key is invalid or expired. Please update the API key in script.js.");
+    if (lower.includes("invalid api key") || lower.includes("api key") || lower.includes("not allowed")) {
+        showMessage("OMDb API key is invalid or not activated yet. Check your OMDb email and API key.");
         return;
     }
 
-    showMessage(`TMDB error: ${message}`);
+    if (lower.includes("too many results")) {
+        showMessage("Too many results. Please search for a more specific movie title.");
+        return;
+    }
+
+    if (lower.includes("not found")) {
+        showMessage("No movies found. Try another title.");
+        return;
+    }
+
+    showMessage(`OMDb error: ${message}`);
 }
 
 function escapeHtml(value) {
@@ -165,14 +185,20 @@ function escapeHtml(value) {
         .replace(/'/g, "&#039;");
 }
 
-async function showMovie(id) {
+async function showMovie(imdbId) {
     try {
-        const movie = await fetchMovies(`/movie/${id}?api_key=${API_KEY}&language=en-US`);
-        alert(`🎬 ${movie.title}\n\n⭐ Rating: ${Number(movie.vote_average || 0).toFixed(1)}\n\n📅 Release: ${movie.release_date || "Unknown"}\n\n📝 ${movie.overview || "No description available."}`);
+        const movie = await fetchMovies({ i: imdbId, plot: "full" });
+        alert(
+            `🎬 ${movie.Title}\n\n` +
+            `⭐ IMDb Rating: ${movie.imdbRating || "N/A"}\n\n` +
+            `📅 Release: ${movie.Released || movie.Year || "Unknown"}\n\n` +
+            `🎭 Genre: ${movie.Genre || "Unknown"}\n\n` +
+            `📝 ${movie.Plot || "No description available."}`
+        );
     } catch (error) {
-        console.error(error);
+        console.error("OMDb details error:", error);
         alert(`Unable to load movie details: ${error.message}`);
     }
 }
 
-getTrendingMovies();
+getPopularMovies();
