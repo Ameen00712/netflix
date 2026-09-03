@@ -14,9 +14,9 @@
         </a>
         <nav>
             <a href="#">Home</a>
-            <a href="#">TV Shows</a>
-            <a href="#">Movies</a>
-            <a href="#">New & Popular</a>
+            <a href="#freeClassics">TV Shows</a>
+            <a href="#freeClassics">Movies</a>
+            <a href="#freeClassics">New & Popular</a>
             <a href="#">My List</a>
         </nav>
         <div class="searchBox">
@@ -30,16 +30,47 @@
             <h1>Unlimited Movies, TV Shows & More</h1>
             <p>Watch anywhere. Cancel anytime.</p>
             <div class="buttons">
-                <button class="playBtn"><i class="fa-solid fa-play"></i> Play</button>
+                <button class="playBtn" id="heroPlayBtn"><i class="fa-solid fa-play"></i> Play</button>
                 <button class="infoBtn"><i class="fa-solid fa-circle-info"></i> More Info</button>
             </div>
         </div>
     </section>
 
     <section class="movies">
-        <h2>Trending Movies</h2>
+        <h2>Popular Movies</h2>
         <div id="movieRow" class="movieRow"></div>
     </section>
+
+    <section class="movies freeClassics" id="freeClassics">
+        <h2>Free to Watch</h2>
+        <p class="sectionHint">Public-domain classics you can stream legally.</p>
+        <div class="classicRow">
+            <article class="classicCard">
+                <div class="classicArt zombieArt"><i class="fa-solid fa-moon"></i></div>
+                <div class="classicInfo">
+                    <h3>Night of the Living Dead</h3>
+                    <p>1968 • Horror • Public Domain</p>
+                    <button class="watchBtn" data-archive="night_of_the_living_dead" data-title="Night of the Living Dead"><i class="fa-solid fa-play"></i> Watch Now</button>
+                </div>
+            </article>
+            <article class="classicCard">
+                <div class="classicArt fridayArt"><i class="fa-solid fa-newspaper"></i></div>
+                <div class="classicInfo">
+                    <h3>His Girl Friday</h3>
+                    <p>1940 • Comedy • Public Domain</p>
+                    <button class="watchBtn" data-archive="his_girl_friday" data-title="His Girl Friday"><i class="fa-solid fa-play"></i> Watch Now</button>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <div class="playerModal" id="playerModal" aria-hidden="true">
+        <div class="playerShell">
+            <button class="closePlayer" id="closePlayer" aria-label="Close player"><i class="fa-solid fa-xmark"></i></button>
+            <div class="playerTitle" id="playerTitle">Now Playing</div>
+            <iframe id="moviePlayer" title="Movie player" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+        </div>
+    </div>
 
     <footer><p>Netflix Clone © 2026</p></footer>
     <script src="script.js?v=20260903"></script>
