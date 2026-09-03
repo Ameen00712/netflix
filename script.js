@@ -10,6 +10,7 @@ const movieRow = document.getElementById("movieRow");
 const search = document.getElementById("search");
 const moviesTitle = document.querySelector(".movies h2");
 const searchIcon = document.querySelector(".searchBox i");
+const banner = document.querySelector(".banner");
 
 async function fetchMovies(params) {
     const url = new URL(API_BASE);
@@ -26,61 +27,56 @@ async function fetchMovies(params) {
         headers: { accept: "application/json" }
     });
 
-    if (!response.ok) {
-        throw new Error(`OMDb request failed (${response.status})`);
-    }
+    if (!response.ok) throw new Error(`OMDb request failed (${response.status})`);
 
     const data = await response.json();
-
-    if (data.Response === "False") {
-        throw new Error(data.Error || "OMDb request failed");
-    }
-
+    if (data.Response === "False") throw new Error(data.Error || "OMDb request failed");
     return data;
 }
 
-// OMDb doesn't provide a trending endpoint, so the homepage uses a curated
-// Netflix-style selection of popular movies and gets their live posters/details.
-const TRENDING_TITLES = [
-    "Avatar",
-    "Avengers: Endgame",
-    "Deadpool & Wolverine",
-    "Oppenheimer",
-    "Dune: Part Two",
-    "Spider-Man: No Way Home",
-    "Interstellar",
-    "Inception",
-    "The Batman",
-    "Top Gun: Maverick",
-    "Jurassic World Dominion",
-    "Inside Out 2",
-    "Guardians of the Galaxy Vol. 3",
-    "John Wick: Chapter 4",
-    "The Super Mario Bros. Movie"
-];
+/* Get recent movie artwork for the Netflix-style hero banner. */
+async function loadHeroMovies() {
+    if (!banner) return;
+
+    try {
+        const searches = ["the", "a", "love", "man"];
+        const allMovies = [];
+
+        for (const term of searches) {
+            try {
+                const data = await fetchMovies({ s: term, type: "movie", y: new Date().getFullYear(), page: 1 });
+                if (data.Search) allMovies.push(...data.Search);
+            } catch (_) {}
+        }
+
+        const unique = [...new Map(allMovies.map(movie => [movie.imdbID, movie])).values()]
+            .filter(movie => movie.Poster && movie.Poster !== "N/A");
+
+        if (!unique.length) return;
+
+        let index = 0;
+        const setHero = () => {
+            const movie = unique[index % unique.length];
+            banner.style.setProperty("--hero-image", `url("${movie.Poster}")`);
+            index++;
+        };
+
+        setHero();
+        setInterval(setHero, 7000);
+    } catch (error) {
+        console.error("Hero artwork error:", error);
+    }
+}
 
 async function getPopularMovies() {
     try {
-        showLoading("Loading trending movies...");
-
-        const results = await Promise.all(
-            TRENDING_TITLES.map(async title => {
-                try {
-                    const data = await fetchMovies({ s: title, type: "movie", page: 1 });
-                    return data.Search?.[0] || null;
-                } catch (error) {
-                    console.warn(`Could not load ${title}:`, error);
-                    return null;
-                }
-            })
-        );
-
-        const movies = results.filter(Boolean);
-        moviesTitle.textContent = "Trending Movies";
-        displayMovies(movies);
+        showLoading("Loading movies...");
+        const data = await fetchMovies({ s: "Avengers", type: "movie", page: 1 });
+        moviesTitle.textContent = "Popular Movies";
+        displayMovies(data.Search || []);
     } catch (error) {
         console.error("OMDb error:", error);
-        moviesTitle.textContent = "Trending Movies";
+        moviesTitle.textContent = "Movies";
         showApiError(error);
     }
 }
@@ -90,7 +86,6 @@ let lastSearch = "";
 
 async function searchMovies(query) {
     query = query.trim();
-
     if (!query) {
         lastSearch = "";
         getPopularMovies();
@@ -101,14 +96,8 @@ async function searchMovies(query) {
 
     try {
         showLoading(`Searching for "${query}"...`);
-        const data = await fetchMovies({
-            s: query,
-            type: "movie",
-            page: 1
-        });
-
+        const data = await fetchMovies({ s: query, type: "movie", page: 1 });
         if (query !== lastSearch) return;
-
         moviesTitle.textContent = `Search results for "${query}"`;
         displayMovies(data.Search || []);
     } catch (error) {
@@ -128,13 +117,11 @@ function runSearch() {
 search.addEventListener("input", function () {
     const query = search.value.trim();
     clearTimeout(searchTimer);
-
     if (!query) {
         lastSearch = "";
         getPopularMovies();
         return;
     }
-
     searchTimer = setTimeout(() => searchMovies(query), 350);
 });
 
@@ -152,7 +139,6 @@ if (searchIcon) {
 
 function displayMovies(movies) {
     movieRow.innerHTML = "";
-
     if (!movies.length) {
         showMessage("No movies found. Try another title.");
         return;
@@ -189,22 +175,18 @@ function showMessage(message) {
 function showApiError(error) {
     const message = error?.message || "Unknown API error";
     const lower = message.toLowerCase();
-
     if (lower.includes("invalid api key") || lower.includes("api key") || lower.includes("not allowed")) {
         showMessage("OMDb API key is invalid or not activated yet. Check your OMDb email and API key.");
         return;
     }
-
     if (lower.includes("too many results")) {
         showMessage("Too many results. Please search for a more specific movie title.");
         return;
     }
-
     if (lower.includes("not found")) {
         showMessage("No movies found. Try another title.");
         return;
     }
-
     showMessage(`OMDb error: ${message}`);
 }
 
@@ -234,3 +216,4 @@ async function showMovie(imdbId) {
 }
 
 getPopularMovies();
+loadHeroMovies();
