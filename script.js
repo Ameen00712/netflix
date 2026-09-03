@@ -34,7 +34,9 @@ async function fetchMovies(params) {
     return data;
 }
 
-/* Build a sharp movie collage and slide the entire hero sideways between sets. */
+/* Two-layer Netflix-style hero slider.
+   The outgoing layer is reset off-screen WITHOUT animation after each slide,
+   preventing it from suddenly crossing the screen again. */
 async function loadHeroMovies() {
     if (!banner) return;
 
@@ -56,15 +58,12 @@ async function loadHeroMovies() {
             .filter(movie => movie.Poster && movie.Poster !== "N/A");
 
         if (!unique.length) return;
-
         unique.sort(() => Math.random() - 0.5);
 
-        // Create two layers so the incoming artwork can physically slide in
-        // while the current artwork slides out in the opposite direction.
         const slideA = document.createElement("div");
         const slideB = document.createElement("div");
         slideA.className = "heroSlide active";
-        slideB.className = "heroSlide";
+        slideB.className = "heroSlide reset";
         banner.insertBefore(slideA, banner.firstChild);
         banner.insertBefore(slideB, banner.firstChild);
 
@@ -80,20 +79,19 @@ async function loadHeroMovies() {
         let active = slideA;
         let incoming = slideB;
 
-        const setInitial = () => {
-            active.style.backgroundImage = makeBackground(index);
-            index = (index + 5) % unique.length;
-        };
+        active.style.backgroundImage = makeBackground(index);
+        index = (index + 5) % unique.length;
 
         const slideNext = () => {
+            // Incoming layer starts on the right with transitions disabled.
+            incoming.classList.remove("active", "exit");
+            incoming.classList.add("reset");
             incoming.style.backgroundImage = makeBackground(index);
             index = (index + 5) % unique.length;
-
-            // Put the new layer just outside the right edge, then trigger the
-            // transition on the next frame for a smooth sideways motion.
-            incoming.classList.remove("exit");
-            incoming.classList.remove("active");
             void incoming.offsetWidth;
+
+            // Both layers now move simultaneously: new -> from right, old -> left.
+            incoming.classList.remove("reset");
             incoming.classList.add("active");
             active.classList.remove("active");
             active.classList.add("exit");
@@ -102,13 +100,14 @@ async function loadHeroMovies() {
             active = incoming;
             incoming = oldActive;
 
+            // IMPORTANT: reset the old layer instantly, never animate it back.
             setTimeout(() => {
-                incoming.classList.remove("exit");
-                incoming.classList.remove("active");
-            }, 1350);
+                incoming.classList.remove("active", "exit");
+                incoming.classList.add("reset");
+                incoming.style.backgroundImage = "none";
+            }, 1400);
         };
 
-        setInitial();
         setTimeout(() => setInterval(slideNext, 7000), 7000);
     } catch (error) {
         console.error("Hero artwork error:", error);
