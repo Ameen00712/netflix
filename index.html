@@ -1,105 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Netflix Clone</title>
-
     <link rel="stylesheet" href="style.css">
-
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 </head>
-
 <body>
-
-    <!-- ================= HEADER ================= -->
-
     <header>
-
-         <h1 class="logoText">NETFLIX</h1>
+        <a class="logoLink" href="#" aria-label="Netflix Home">
+            <svg class="netflixLogo" viewBox="0 0 111 30" aria-label="NETFLIX" role="img">
+                <path fill="#E50914" d="M0 0h11.2l8.7 17.1V0h8.7v30H17.4L8.7 12.9V30H0V0Zm35.1 0h22.1v7.3H43.8v4.3h12.1v7H43.8v4.1h13.7V30H35.1V0Zm26.4 0h9.1l4.5 8.5L79.7 0h9.5L80.5 14.6 89.6 30H80l-5-9.2-4.9 9.2h-9.5l9.3-15.3L61.5 0Zm30.4 0h8.7v30h-8.7V0Z"/>
+            </svg>
+        </a>
         <nav>
-
             <a href="#">Home</a>
             <a href="#">TV Shows</a>
             <a href="#">Movies</a>
             <a href="#">New & Popular</a>
             <a href="#">My List</a>
-
         </nav>
-
         <div class="searchBox">
-
-            <input
-                type="text"
-                id="search"
-                placeholder="Search Movies...">
-
+            <input type="text" id="search" placeholder="Search Movies...">
             <i class="fa-solid fa-magnifying-glass"></i>
-
         </div>
-
     </header>
 
-    <!-- ================= HERO BANNER ================= -->
-
     <section class="banner">
-
         <div class="overlayBanner">
-
             <h1>Unlimited Movies, TV Shows & More</h1>
-
-            <p>
-                Watch anywhere. Cancel anytime.
-            </p>
-
+            <p>Watch anywhere. Cancel anytime.</p>
             <div class="buttons">
-
-                <button class="playBtn">
-                    <i class="fa-solid fa-play"></i>
-                    Play
-                </button>
-
-                <button class="infoBtn">
-                    <i class="fa-solid fa-circle-info"></i>
-                    More Info
-                </button>
-
+                <button class="playBtn"><i class="fa-solid fa-play"></i> Play</button>
+                <button class="infoBtn"><i class="fa-solid fa-circle-info"></i> More Info</button>
             </div>
-
         </div>
-
     </section>
-
-    <!-- ================= MOVIES ================= -->
 
     <section class="movies">
-
         <h2>Trending Movies</h2>
-
-        <div id="movieRow" class="movieRow">
-
-            <!-- Movies from OMDb API will appear here -->
-
-        </div>
-
+        <div id="movieRow" class="movieRow"></div>
     </section>
 
-    <!-- ================= FOOTER ================= -->
-
-    <footer>
-
-        <p>
-
-            Netflix Clone © 2026
-
-        </p>
-
-    </footer>
-
+    <footer><p>Netflix Clone © 2026</p></footer>
     <script src="script.js?v=20260903"></script>
-
 </body>
-
 </html>
