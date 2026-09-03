@@ -39,15 +39,48 @@ async function fetchMovies(params) {
     return data;
 }
 
+// OMDb doesn't provide a trending endpoint, so the homepage uses a curated
+// Netflix-style selection of popular movies and gets their live posters/details.
+const TRENDING_TITLES = [
+    "Avatar",
+    "Avengers: Endgame",
+    "Deadpool & Wolverine",
+    "Oppenheimer",
+    "Dune: Part Two",
+    "Spider-Man: No Way Home",
+    "Interstellar",
+    "Inception",
+    "The Batman",
+    "Top Gun: Maverick",
+    "Jurassic World Dominion",
+    "Inside Out 2",
+    "Guardians of the Galaxy Vol. 3",
+    "John Wick: Chapter 4",
+    "The Super Mario Bros. Movie"
+];
+
 async function getPopularMovies() {
     try {
-        showLoading("Loading movies...");
-        const data = await fetchMovies({ s: "Avengers", type: "movie", page: 1 });
-        moviesTitle.textContent = "Popular Movies";
-        displayMovies(data.Search || []);
+        showLoading("Loading trending movies...");
+
+        const results = await Promise.all(
+            TRENDING_TITLES.map(async title => {
+                try {
+                    const data = await fetchMovies({ s: title, type: "movie", page: 1 });
+                    return data.Search?.[0] || null;
+                } catch (error) {
+                    console.warn(`Could not load ${title}:`, error);
+                    return null;
+                }
+            })
+        );
+
+        const movies = results.filter(Boolean);
+        moviesTitle.textContent = "Trending Movies";
+        displayMovies(movies);
     } catch (error) {
         console.error("OMDb error:", error);
-        moviesTitle.textContent = "Movies";
+        moviesTitle.textContent = "Trending Movies";
         showApiError(error);
     }
 }
@@ -74,7 +107,6 @@ async function searchMovies(query) {
             page: 1
         });
 
-        // Ignore an older request if the user has already searched for something else.
         if (query !== lastSearch) return;
 
         moviesTitle.textContent = `Search results for "${query}"`;
